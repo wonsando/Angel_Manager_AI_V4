@@ -10,6 +10,7 @@ from modules.staff import show_staff
 from modules.construction import show_construction
 from modules.inventory import show_inventory
 from modules.ai_assistant import show_ai_assistant
+from modules.common import using_cloud_database
 
 st.set_page_config(
     page_title="Angel Manager AI",
@@ -21,8 +22,13 @@ st.set_page_config(
 DATA = Path("data")
 DATA.mkdir(exist_ok=True)
 
-DEFAULT_USERNAME = "admin"
-DEFAULT_PASSWORD_HASH = hashlib.sha256("angel123".encode()).hexdigest()
+try:
+    DEFAULT_USERNAME = str(st.secrets.get("APP_USERNAME", "admin"))
+    default_password = str(st.secrets.get("APP_PASSWORD", "angel123"))
+except Exception:
+    DEFAULT_USERNAME = "admin"
+    default_password = "angel123"
+DEFAULT_PASSWORD_HASH = hashlib.sha256(default_password.encode()).hexdigest()
 
 def password_hash(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
@@ -55,6 +61,7 @@ if not st.session_state["logged_in"]:
 st.sidebar.title("🏫 Angel Manager AI")
 st.sidebar.caption("Professional Edition — Version 4")
 st.sidebar.write(f"Signed in as **{st.session_state.get('username', 'admin')}**")
+st.sidebar.caption("☁️ Supabase online database" if using_cloud_database() else "💾 Local storage mode")
 
 section = st.sidebar.radio(
     "Choose a module",

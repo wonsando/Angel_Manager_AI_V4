@@ -1,31 +1,18 @@
-ANGEL MANAGER AI VERSION 4
+ANGEL MANAGER AI VERSION 5 — ONLINE DATABASE EDITION
 
-HOW TO START ON WINDOWS
+WHAT IS NEW
+- Saves students, fees, attendance, staff, construction and inventory in Supabase.
+- Data is available from phone and laptop.
+- Falls back to local CSV files when Supabase secrets are not configured.
+- Login username/password can be stored securely in Streamlit Secrets.
 
-1. Extract this ZIP folder.
-2. Open the extracted Angel_Manager_AI_V4 folder.
-3. Double-click Run_Angel_Manager_AI.bat.
-4. A browser window will open automatically.
-
-LOGIN
-Username: admin
-Password: angel123
+DEPLOYMENT
+1. Upload all files in this folder to your GitHub repository.
+2. In Supabase, open SQL Editor and run supabase_setup.sql.
+3. In Streamlit: My apps > Angel Manager AI > Settings > Secrets.
+4. Add SUPABASE_URL, SUPABASE_ANON_KEY, APP_USERNAME and APP_PASSWORD.
+5. Save secrets and reboot the app.
 
 IMPORTANT
-Change the password in app.py before using the system with real school data.
-
-This starter includes:
-- Secure login
-- Dashboard
-- Students
-- Fees
-- Attendance
-- Staff
-- Construction
-- Inventory
-- Data-aware AI Assistant
-- CSV downloads
-- Separate professional modules
-
-Your information is stored inside the data folder.
-Keep backups of the entire Angel_Manager_AI_V4 folder.
+- Do not place secret/service-role keys in GitHub.
+- Use only the Supabase anon public key in Streamlit Secrets.
