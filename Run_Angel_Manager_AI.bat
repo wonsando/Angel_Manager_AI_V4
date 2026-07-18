@@ -1,5 +1,3 @@
-@echo off
-cd /d "%~dp0"
-python -m pip install -r requirements.txt
+g@echo off
 python -m streamlit run app.py
 pause
