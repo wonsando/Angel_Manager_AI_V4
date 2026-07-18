@@ -1,6 +1,6 @@
 import io, zipfile
 import streamlit as st
-from .core import DATA
+from core import DATA
 
 def show_settings():
     st.title("⚙️ System Settings")
