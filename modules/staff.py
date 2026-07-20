@@ -1,30 +1,17 @@
+import datetime as dt
 import streamlit as st
-import pandas as pd
-from modules.common import load_table, save_table
+from .core import append_row, data_editor
 
 def show_staff():
-    st.title("👨‍🏫 Staff Management")
-    df = load_table("staff")
-
-    with st.form("staff_form", clear_on_submit=True):
-        c1, c2 = st.columns(2)
-        staff_id = c1.text_input("Staff ID")
-        name = c2.text_input("Staff Name")
-        role = c1.text_input("Role")
-        phone = c2.text_input("Phone Number")
-        email = c1.text_input("Email")
-        salary = c2.number_input("Monthly Salary", min_value=0.0)
-        status = st.selectbox("Employment Status", ["Active", "On Leave", "Suspended", "Former"])
-        submitted = st.form_submit_button("Save Staff", use_container_width=True)
-
-    if submitted:
-        if not staff_id.strip() or not name.strip():
-            st.error("Staff ID and name are required.")
-        else:
-            new = pd.DataFrame([[staff_id, name, role, phone, email, salary, status]], columns=df.columns)
-            df = pd.concat([df, new], ignore_index=True)
-            save_table("staff", df)
-            st.success("Staff member saved.")
-            st.rerun()
-
-    st.dataframe(df, use_container_width=True)
+    st.title("👩‍🏫 Staff & Human Resources")
+    t1,t2=st.tabs(["Add Staff","Staff Directory"])
+    with t1:
+        with st.form("staff",clear_on_submit=True):
+            a,b,c=st.columns(3)
+            sid=a.text_input("Staff ID"); name=b.text_input("Full Name"); role=c.text_input("Role")
+            dept=a.text_input("Department"); phone=b.text_input("Phone"); email=c.text_input("Email")
+            et=a.selectbox("Employment Type",["Permanent","Contract","Part-time","Volunteer"]); sal=b.number_input("Monthly Salary",min_value=0.0); start=c.date_input("Start Date",dt.date.today())
+            status=a.selectbox("Status",["Active","On Leave","Suspended","Exited"])
+            ok=st.form_submit_button("Save Staff Member",use_container_width=True)
+        if ok: append_row("staff",dict(staff_id=sid,name=name,role=role,department=dept,phone=phone,email=email,employment_type=et,salary=sal,start_date=start,status=status)); st.success("Staff member saved.")
+    with t2: data_editor("staff","Staff Directory")

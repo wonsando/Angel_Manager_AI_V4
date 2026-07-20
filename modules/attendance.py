@@ -1,28 +1,16 @@
+import datetime as dt
 import streamlit as st
-import pandas as pd
-from datetime import date
-from modules.common import load_table, save_table
+from .core import append_row, data_editor
 
 def show_attendance():
-    st.title("✅ Attendance")
-    df = load_table("attendance")
-    students = load_table("students")
-    names = [""] + students["Student Name"].dropna().astype(str).tolist()
-
-    with st.form("attendance_form", clear_on_submit=True):
-        c1, c2 = st.columns(2)
-        d = c1.date_input("Date", date.today())
-        admission = c2.text_input("Admission Number")
-        name = c1.selectbox("Student Name", names)
-        status = c2.selectbox("Status", ["Present", "Absent", "Late", "Excused"])
-        notes = st.text_input("Notes")
-        submitted = st.form_submit_button("Save Attendance", use_container_width=True)
-
-    if submitted:
-        new = pd.DataFrame([[d, admission, name, status, notes]], columns=df.columns)
-        df = pd.concat([df, new], ignore_index=True)
-        save_table("attendance", df)
-        st.success("Attendance saved.")
-        st.rerun()
-
-    st.dataframe(df, use_container_width=True)
+    st.title("📝 Attendance")
+    t1,t2=st.tabs(["Record Attendance","Attendance Register"])
+    with t1:
+        with st.form("att",clear_on_submit=True):
+            a,b,c=st.columns(3)
+            date=a.date_input("Date",dt.date.today()); typ=b.selectbox("Person Type",["Student","Staff"]); pid=c.text_input("ID / Admission Number")
+            name=a.text_input("Name"); group=b.text_input("Class / Department"); status=c.selectbox("Status",["Present","Absent","Late","Excused","Sick"])
+            time=a.time_input("Time In"); notes=b.text_input("Notes")
+            ok=st.form_submit_button("Record Attendance",use_container_width=True)
+        if ok: append_row("attendance",dict(date=date,person_type=typ,person_id=pid,name=name,class_department=group,status=status,time_in=time,notes=notes)); st.success("Attendance recorded.")
+    with t2: data_editor("attendance","Attendance Register")

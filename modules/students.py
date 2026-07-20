@@ -1,82 +1,34 @@
+import datetime as dt
 import streamlit as st
-import pandas as pd
-from datetime import date
-from modules.common import load_table, save_table
-
-CURRICULA = [
-    "CBC",
-    "Special Education",
-    "International Baccalaureate (IB)",
-    "British Curriculum",
-    "American Curriculum",
-]
-
-CLASSES = [
-    "CBC - Creche", "CBC - Playgroup", "CBC - PP1", "CBC - PP2",
-    "CBC - Grade 1", "CBC - Grade 2", "CBC - Grade 3", "CBC - Grade 4",
-    "CBC - Grade 5", "CBC - Grade 6", "CBC - Grade 7", "CBC - Grade 8",
-    "CBC - Grade 9", "CBC - Senior School",
-    "Special Education - Early Intervention", "Special Education - Autism Support",
-    "Special Education - Learning Disabilities", "Special Education - Hearing Impairment",
-    "Special Education - Visual Impairment", "Special Education - Physical Disabilities",
-    "Special Education - Gifted and Talented",
-    "IB - Primary Years Programme (PYP)", "IB - Middle Years Programme (MYP)",
-    "IB - Diploma Programme (DP)", "IB - Career-related Programme (CP)",
-    "British - Early Years Foundation Stage (EYFS)", "British - Key Stage 1",
-    "British - Key Stage 2", "British - Key Stage 3", "British - IGCSE",
-    "British - AS Level", "British - A Level",
-    "American - Elementary School", "American - Middle School",
-    "American - High School", "American - Advanced Placement (AP)",
-    "American - Common Core",
-]
+from .core import append_row, data_editor, read_table
 
 def show_students():
-    st.title("👩‍🎓 Student Management")
-    df = load_table("students")
-
-    with st.expander("Register a New Student", expanded=True):
-        with st.form("student_form", clear_on_submit=True):
-            c1, c2 = st.columns(2)
-            admission = c1.text_input("Admission Number")
-            name = c2.text_input("Student Name")
-            dob = c1.date_input("Date of Birth", date(2018, 1, 1))
-            gender = c2.selectbox("Gender", ["Female", "Male", "Other"])
-            curriculum = c1.selectbox("Curriculum", CURRICULA)
-            class_name = c2.selectbox("Class / Program", CLASSES)
-            parent = c1.text_input("Parent/Guardian Name")
-            phone = c2.text_input("Phone Number")
-            email = c1.text_input("Parent Email")
-            emergency = c2.text_input("Emergency Contact")
-            route = st.text_input("Transport Route")
-            submitted = st.form_submit_button("Save Student", use_container_width=True)
-
-        if submitted:
-            if not admission.strip() or not name.strip():
-                st.error("Admission number and student name are required.")
-            elif admission in df["Admission No"].astype(str).values:
-                st.error("That admission number already exists.")
+    st.title("👨‍🎓 Students & Admissions")
+    t1,t2,t3=st.tabs(["Register Student","Student Directory","Documents & Profiles"])
+    with t1:
+        with st.form("student_form",clear_on_submit=True):
+            a,b,c=st.columns(3)
+            adm=a.text_input("Admission Number")
+            name=b.text_input("Student Name")
+            dob=c.date_input("Date of Birth",value=dt.date(2015,1,1))
+            gender=a.selectbox("Gender",["Female","Male","Other"])
+            curriculum=b.selectbox("Curriculum",["CBC","British / IGCSE","American","International Baccalaureate","Special Education","Daycare / Early Years"])
+            program=c.text_input("Class / Program")
+            guardian=a.text_input("Parent / Guardian")
+            phone=b.text_input("Phone Number")
+            email=c.text_input("Email")
+            medical=a.text_area("Medical / Allergy Notes")
+            route=b.text_input("Transport Route")
+            status=c.selectbox("Status",["Active","Applicant","Suspended","Alumni"])
+            ok=st.form_submit_button("Save Student",use_container_width=True)
+        if ok:
+            if not adm or not name: st.error("Admission number and student name are required.")
             else:
-                new = pd.DataFrame([[
-                    admission, name, dob, gender, curriculum, class_name,
-                    parent, phone, email, emergency, route
-                ]], columns=df.columns)
-                df = pd.concat([df, new], ignore_index=True)
-                save_table("students", df)
-                st.success("Student registered successfully.")
-                st.rerun()
-
-    search = st.text_input("Search students")
-    shown = df
-    if search.strip():
-        mask = df.astype(str).apply(
-            lambda row: row.str.contains(search, case=False, na=False).any(), axis=1
-        )
-        shown = df[mask]
-
-    st.dataframe(shown, use_container_width=True)
-    st.download_button(
-        "Download Student List",
-        data=shown.to_csv(index=False),
-        file_name="students.csv",
-        mime="text/csv",
-    )
+                append_row("students",dict(admission_no=adm,student_name=name,dob=dob,gender=gender,curriculum=curriculum,class_program=program,guardian_name=guardian,phone=phone,email=email,medical_notes=medical,transport_route=route,status=status)); st.success("Student saved.")
+    with t2: data_editor("students","Student Directory")
+    with t3:
+        st.subheader("Student Profile Search")
+        df=read_table("students")
+        q=st.text_input("Search by name or admission number")
+        if q and len(df): st.dataframe(df[df.astype(str).apply(lambda r:r.str.contains(q,case=False).any(),axis=1)],use_container_width=True)
+        st.caption("Document upload can be connected to Supabase Storage later; core records are already integrated here.")

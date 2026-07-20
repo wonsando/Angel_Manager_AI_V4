@@ -1,49 +1,23 @@
-import streamlit as st
 import pandas as pd
-from modules.common import load_table
+import streamlit as st
+from .core import read_table, metric_money
 
 def show_dashboard():
     st.title("📊 Executive Dashboard")
-
-    students = load_table("students")
-    fees = load_table("fees")
-    staff = load_table("staff")
-    construction = load_table("construction")
-    inventory = load_table("inventory")
-
-    total_fees = pd.to_numeric(fees.get("Amount Paid"), errors="coerce").fillna(0).sum()
-    total_balances = pd.to_numeric(fees.get("Balance"), errors="coerce").fillna(0).sum()
-    total_budget = pd.to_numeric(construction.get("Budget"), errors="coerce").fillna(0).sum()
-    total_spent = pd.to_numeric(construction.get("Amount Spent"), errors="coerce").fillna(0).sum()
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Students", len(students))
-    c2.metric("Staff", len(staff))
-    c3.metric("Fees Collected", f"KES {total_fees:,.0f}")
-    c4.metric("Outstanding Balances", f"KES {total_balances:,.0f}")
-
-    c5, c6, c7 = st.columns(3)
-    c5.metric("Construction Budget", f"KES {total_budget:,.0f}")
-    c6.metric("Construction Spent", f"KES {total_spent:,.0f}")
-    c7.metric("Inventory Items", len(inventory))
-
-    st.subheader("Management Alerts")
-    if total_spent > total_budget and total_budget > 0:
-        st.error("Construction spending is above the recorded budget.")
-    else:
-        st.success("Construction spending is currently within the recorded budget.")
-
-    low_stock = inventory.copy()
-    if not low_stock.empty:
-        qty = pd.to_numeric(low_stock["Quantity"], errors="coerce").fillna(0)
-        minimum = pd.to_numeric(low_stock["Minimum Stock"], errors="coerce").fillna(0)
-        low_stock = low_stock[qty <= minimum]
-
-    if not low_stock.empty:
-        st.warning(f"{len(low_stock)} inventory item(s) need restocking.")
-        st.dataframe(low_stock, use_container_width=True)
-    else:
-        st.info("No low-stock alerts.")
-
-    st.subheader("Recent Student Registrations")
-    st.dataframe(students.tail(5), use_container_width=True)
+    students, fees, staff, attendance = [read_table(x) for x in ["students","fees","staff","attendance"]]
+    paid=pd.to_numeric(fees.get("amount_paid",pd.Series(dtype=float)),errors="coerce").fillna(0).sum()
+    due=pd.to_numeric(fees.get("amount_due",pd.Series(dtype=float)),errors="coerce").fillna(0).sum()
+    c1,c2,c3,c4=st.columns(4)
+    c1.metric("Students",len(students)); c2.metric("Active Staff",len(staff)); c3.metric("Fees Collected",metric_money(paid)); c4.metric("Outstanding",metric_money(max(due-paid,0)))
+    st.divider()
+    a,b=st.columns(2)
+    with a:
+        st.subheader("Enrollment by Curriculum")
+        if len(students): st.bar_chart(students["curriculum"].value_counts())
+        else: st.info("Register students to see enrollment analytics.")
+    with b:
+        st.subheader("Attendance Summary")
+        if len(attendance): st.bar_chart(attendance["status"].value_counts())
+        else: st.info("Record attendance to see trends.")
+    st.subheader("Quick Actions")
+    st.info("Use the menu to register students, receive fees, record grades, manage staff, send messages, track transport, clinic, library, payroll, construction, and inventory.")
