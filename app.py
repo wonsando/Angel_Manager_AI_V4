@@ -1,5 +1,3 @@
-import hashlib
-from pathlib import Path
 import streamlit as st
 
 from modules.core import init_data, login_screen, sidebar_header
@@ -16,8 +14,16 @@ from modules.construction import show_construction
 from modules.inventory import show_inventory
 from modules.ai_assistant import show_ai_assistant
 from modules.settings import show_settings
+from modules.user_management import get_permissions, render as show_user_management
 
-st.set_page_config(page_title="Angel Manager AI Enterprise", page_icon="🏫", layout="wide", initial_sidebar_state="expanded")
+
+st.set_page_config(
+    page_title="Angel Manager AI Enterprise",
+    page_icon="🏫",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 init_data()
 
 if not st.session_state.get("logged_in", False):
@@ -25,12 +31,6 @@ if not st.session_state.get("logged_in", False):
     st.stop()
 
 sidebar_header()
-section = st.sidebar.radio("Choose a module", [
-    "Dashboard", "Students & Admissions", "Fees & Receipts", "Attendance",
-    "Academics & Reports", "Staff & HR", "Operations", "Finance & Payroll",
-    "Communication & Portals", "Construction", "Inventory & Procurement",
-    "AI Assistant", "System Settings"
-])
 
 routes = {
     "Dashboard": show_dashboard,
@@ -46,5 +46,19 @@ routes = {
     "Inventory & Procurement": show_inventory,
     "AI Assistant": show_ai_assistant,
     "System Settings": show_settings,
+    "User Management": show_user_management,
 }
+
+role = st.session_state.get("role", "Director")
+allowed_modules = [
+    module_name
+    for module_name in get_permissions(role)
+    if module_name in routes
+]
+
+if not allowed_modules:
+    st.error("Your account has no module permissions. Contact the Director.")
+    st.stop()
+
+section = st.sidebar.radio("Choose a module", allowed_modules)
 routes[section]()
